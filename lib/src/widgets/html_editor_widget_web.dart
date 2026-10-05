@@ -1,14 +1,12 @@
-export 'dart:html';
-
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:html_editor_enhanced/html_editor.dart';
 import 'package:html_editor_enhanced/utils/utils.dart';
-// ignore: avoid_web_libraries_in_flutter
-import 'dart:html' as html;
-import 'package:html_editor_enhanced/utils/shims/dart_ui.dart' as ui;
+import 'dart:js_interop';
+import 'package:web/web.dart' as web;
+import 'dart:ui_web' as ui;
 
 /// The HTML Editor widget itself, for web (uses IFrameElement)
 class HtmlEditorWidget extends StatefulWidget {
@@ -113,8 +111,8 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
             },
           ''';
         if (p.onSelect != null) {
-          html.window.onMessage.listen((event) {
-            var data = json.decode(event.data);
+          web.window.onMessage.listen((event) {
+            var data = json.decode(event.data.dartify() as String);
             if (data['type'] != null &&
                 data['type'].contains('toDart:') &&
                 data['view'] == createdViewId &&
@@ -462,13 +460,13 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
         .replaceFirst('"summernote-lite.min.js"',
             '"assets/packages/html_editor_enhanced/assets/summernote-lite.min.js"');
     if (widget.callbacks != null) addJSListener(widget.callbacks!);
-    final iframe = html.IFrameElement()
+    final iframe = web.HTMLIFrameElement()
       ..width = MediaQuery.of(widget.initBC).size.width.toString() //'800'
       ..height = widget.htmlEditorOptions.autoAdjustHeight
           ? actualHeight.toString()
           : widget.otherOptions.height.toString()
       // ignore: unsafe_html, necessary to load HTML string
-      ..srcdoc = htmlString
+      ..srcdoc = htmlString.toJS
       ..style.border = 'none'
       ..style.overflow = 'hidden'
       ..onLoad.listen((event) async {
@@ -489,8 +487,8 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
         final jsonEncoder = JsonEncoder();
         var jsonStr = jsonEncoder.convert(data);
         var jsonStr2 = jsonEncoder.convert(data2);
-        html.window.onMessage.listen((event) {
-          var data = json.decode(event.data);
+        web.window.onMessage.listen((event) {
+          var data = json.decode(event.data.dartify() as String);
           if (data['type'] != null &&
               data['type'].contains('toDart: htmlHeight') &&
               data['view'] == createdViewId &&
@@ -527,8 +525,8 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
             }
           }
         });
-        html.window.postMessage(jsonStr, '*');
-        html.window.postMessage(jsonStr2, '*');
+        web.window.postMessage(jsonStr.toJS, '*'.toJS);
+        web.window.postMessage(jsonStr2.toJS, '*'.toJS);
       });
     ui.platformViewRegistry
         .registerViewFactory(createdViewId, (int viewId) => iframe);
@@ -695,8 +693,8 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
 
   /// Adds an event listener to check when a callback is fired
   void addJSListener(Callbacks c) {
-    html.window.onMessage.listen((event) {
-      var data = json.decode(event.data);
+    web.window.onMessage.listen((event) {
+      var data = json.decode(event.data.dartify() as String);
       if (data['type'] != null &&
           data['type'].contains('toDart:') &&
           data['view'] == createdViewId) {

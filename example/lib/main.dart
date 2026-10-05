@@ -96,7 +96,7 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
                   mediaUploadInterceptor:
                       (PlatformFile file, InsertFileType type) async {
                     print(file.name); //filename
-                    print(file.size); //size in bytes
+                    print(await file.length()); //size in bytes
                     print(file.extension); //file extension (eg jpeg or mp4)
                     return true;
                   },
